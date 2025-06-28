@@ -31,4 +31,4 @@ services:
 
 networks:
   web:
-    external: true # must match the Traefik network name
+    external: true
