@@ -1,0 +1,34 @@
+services:
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    environment:
+      - BASE_URL=https://search.ryan-jasinski.com/
+    volumes:
+      - ./searxng:/etc/searxng:rw
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.searxng.rule=Host(`search.ryan-jasinski.com`)"
+      - "traefik.http.routers.searxng.entrypoints=websecure"
+      - "traefik.http.routers.searxng.tls.certresolver=letsencrypt"
+
+      # Optional: Basic auth middleware
+      - "traefik.http.routers.searxng.middlewares=searxng-auth"
+      - "traefik.http.middlewares.searxng-auth.basicauth.users=neo:$$apr1$$J8qzvc15$$oZVUAdtOkhL1Fjtr51Ni1."
+
+      # Optional: redirect HTTP to HTTPS
+      - "traefik.http.routers.searxng-redirect.entrypoints=web"
+      - "traefik.http.routers.searxng-redirect.rule=Host(`search.ryan-jasinski.com`)"
+      - "traefik.http.routers.searxng-redirect.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+      #Service
+      - "traefik.http.services.searxng.loadbalancer.server.port=8080"
+    restart: unless-stopped
+    networks:
+      - web
+
+networks:
+  web:
+    external: true # must match the Traefik network name
